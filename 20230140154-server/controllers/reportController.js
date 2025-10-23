@@ -1,19 +1,51 @@
-const presensiRecords = require("../data/presensiData");
+"use strict";
+
+const { Presensi } = require("../models");
 const { format } = require("date-fns-tz");
+const { Op } = require("sequelize");
 const timeZone = "Asia/Jakarta";
 
-exports.getDailyReport = (req, res) => {
-  const today = format(new Date(), "yyyy-MM-dd", { timeZone });
+exports.getDailyReport = async (req, res) => {
+  try {
+    // Ambil tanggal hari ini (zona waktu Asia/Jakarta)
+    const today = format(new Date(), "yyyy-MM-dd", { timeZone });
 
-  // Filter hanya data hari ini
-  const dailyData = presensiRecords.filter(record => {
-    const recordDate = format(new Date(record.checkIn), "yyyy-MM-dd", { timeZone });
-    return recordDate === today;
-  });
+    // Hitung awal dan akhir hari (00:00:00 - 23:59:59)
+    const startOfDay = new Date(`${today}T00:00:00`);
+    const endOfDay = new Date(`${today}T23:59:59`);
 
-  res.json({
-    message: `Laporan presensi tanggal ${today}`,
-    total: dailyData.length,
-    data: dailyData,
-  });
+    // Ambil data dari database menggunakan Sequelize
+    const dailyData = await Presensi.findAll({
+      where: {
+        checkIn: {
+          [Op.between]: [startOfDay, endOfDay],
+        },
+      },
+      order: [["checkIn", "ASC"]],
+    });
+
+    // Format hasil untuk dikirim ke response
+    const formattedData = dailyData.map((record) => ({
+      id: record.id,
+      userId: record.userId,
+      nama: record.nama,
+      checkIn: format(record.checkIn, "yyyy-MM-dd HH:mm:ssXXX", { timeZone }),
+      checkOut: record.checkOut
+        ? format(record.checkOut, "yyyy-MM-dd HH:mm:ssXXX", { timeZone })
+        : null,
+    }));
+
+    // Kirim hasil ke client
+    res.json({
+      message: `Laporan presensi tanggal ${today}`,
+      total: formattedData.length,
+      data: formattedData,
+    });
+  } catch (error) {
+    console.error("❌ Error getDailyReport:", error);
+    res.status(500).json({
+      message: "Terjadi kesalahan saat mengambil laporan presensi",
+      error: error.message,
+    });
+  }
 };
