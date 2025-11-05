@@ -1,29 +1,29 @@
-const express = require('express');
-const router = express.Router();
+const express = require('express'); //mengimpor modul express
+const router = express.Router(); //membuat instance router dari express
 
 // Data dummy untuk buku
 let books = [
-  { id: 1, title: 'Book 1', author: 'Author 1' },
-  { id: 2, title: 'Book 2', author: 'Author 2' }
+  { id: 1, title: 'Book 1', author: 'Author 1' }, //data buku pertama
+  { id: 2, title: 'Book 2', author: 'Author 2' } //data buku kedua
 ];
 
 // GET semua buku
-router.get('/', (req, res) => {
-  res.json(books);
+router.get('/', (req, res) => { //Endpoint get / untuk ambil semua data buku
+  res.json(books); //mengirim semua data buku dalam format JSON
 });
 
 // GET buku berdasarkan ID
-router.get('/:id', (req, res) => {
-  const book = books.find(b => b.id === parseInt(req.params.id));
-  if (!book) {
-    return res.status(404).json({ message: 'Book not found' });
+router.get('/:id', (req, res) => { //Endpoint GET /:id untuk ambil buku berdasarkan ID
+  const book = books.find(b => b.id === parseInt(req.params.id)); //mencari buku dengan ID tertentu
+  if (!book) { //Jika buku tidak ditemukan
+    return res.status(404).json({ message: 'Book not found' }); //Kirim respons 404 (Tidak ditemukan)
   }
-  res.json(book);
+  res.json(book); // Jika ditemukan. kirim data buku dalam format JSON
 });
 
 // POST tambah buku baru
-router.post('/', (req, res) => {
-  const { title, author } = req.body;
+router.post('/', (req, res) => { //endpoint POST / untuk menambah buku baru
+  const { title, author } = req.body; //mengambil data title dan author dari body request
 
   if (!title || !author) {
     return res.status(400).json({ message: 'Title and author are required' });

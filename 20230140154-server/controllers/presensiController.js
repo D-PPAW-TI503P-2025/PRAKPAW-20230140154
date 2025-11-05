@@ -87,3 +87,78 @@
  	    res.status(500).json({ message: "Terjadi kesalahan pada server", error: error.message });
  	  }
  	};
+
+	exports.deletePresensi = async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const presensiId = req.params.id;
+    const recordToDelete = await Presensi.findByPk(presensiId);
+
+    if (!recordToDelete) {
+      return res
+        .status(404) //ini kalo linknya tidak ada
+        .json({ message: "Catatan presensi tidak ditemukan." });
+    }
+    if (recordToDelete.userId !== userId) {
+      return res
+        .status(403) //nomor akses ditolak karena tidak sesuai dengan pemilik presensi
+        .json({ message: "Akses ditolak: Anda bukan pemilik catatan ini." });
+    }
+    await recordToDelete.destroy();
+    res.status(200) .json({ message: "Data berhasil dihapus." });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Terjadi kesalahan pada server", error: error.message });
+  }
+};
+
+exports.updatePresensi = async (req, res) => {
+    try {
+        const presensiId = req.params.id;
+        const { checkIn, checkOut, nama } = req.body;
+
+        // ✅ Tambahan: validasi format tanggal (tanpa ubah logika kamu)
+        const isValidDate = (value) => !isNaN(Date.parse(value));
+
+        if (checkIn && !isValidDate(checkIn)) {
+            return res.status(400).json({
+                message: "Format tanggal checkIn tidak valid. perhatikan tanggalnya",
+            });
+        }
+
+        if (checkOut && !isValidDate(checkOut)) {
+            return res.status(400).json({
+                message: "Format tanggal checkOut tidak valid. Gunakan format YYYY-MM-DD atau ISO8601.",
+            });
+        }
+
+        if (checkIn === undefined && checkOut === undefined && nama === undefined) {
+            return res.status(400).json({
+                message:
+                    "Request body tidak berisi data yang valid untuk diupdate (checkIn, checkOut, atau nama).",
+            });
+        }
+
+        const recordToUpdate = await Presensi.findByPk(presensiId);
+        if (!recordToUpdate) {
+            return res
+                .status(404)
+                .json({ message: "Catatan presensi tidak ditemukan." });
+        }
+
+        recordToUpdate.checkIn = checkIn || recordToUpdate.checkIn;
+        recordToUpdate.checkOut = checkOut || recordToUpdate.checkOut;
+        recordToUpdate.nama = nama || recordToUpdate.nama;
+        await recordToUpdate.save();
+
+        res.json({
+            message: "Data presensi berhasil diperbarui.",
+            data: recordToUpdate,
+        });
+    } catch (error) {
+        res
+            .status(500)
+            .json({ message: "Terjadi kesalahan pada server", error: error.message });
+    }
+};
