@@ -1,12 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { addUserData, isAdmin } = require("../middleware/permissionMiddleware");
+const { authenticateToken, isAdmin } = require("../middleware/permissionMiddleware");
 const { getDailyReport } = require("../controllers/reportController");
 
-// Middleware untuk menambahkan data user dummy
-router.use(addUserData);
-
 // Route hanya untuk admin
-router.get("/daily", isAdmin, getDailyReport);
+router.get("/daily", authenticateToken, isAdmin, getDailyReport);
 
 module.exports = router;

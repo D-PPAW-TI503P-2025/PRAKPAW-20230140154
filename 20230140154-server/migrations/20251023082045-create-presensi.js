@@ -11,12 +11,18 @@ module.exports = {
       },
       userId: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
+
+        // === Tambahan sesuai instruksi ===
+        references: {
+          model: "Users", // sesuaikan nama tabel
+          key: "id"
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE"
+        // ==================================
       },
-      nama: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
+      
       checkIn: {
         allowNull: false,
         type: Sequelize.DATE
